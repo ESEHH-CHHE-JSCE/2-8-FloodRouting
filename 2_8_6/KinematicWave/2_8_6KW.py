@@ -1,4 +1,4 @@
-'''kinematic wave 法による洪水追跡計算を行うプログラム'''
+"""kinematic wave 法による洪水追跡計算を行うプログラム."""
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import numpy as np
@@ -16,9 +16,10 @@ decimal.getcontext().prec = 10
 
 
 class SetData:
-    """入力データを読み込むクラス"""
+    """入力データを読み込むクラス."""
+
     def __init__(self):
-        """データの読み込み"""
+        """データの読み込み."""
         self.data = pd.read_excel(INPUT_FILE_NAME, sheet_name=None)
         # 計算条件の読み込み
         print(self.data[SHEET1_NAME])
@@ -53,7 +54,7 @@ class SetData:
         self.Q = np.zeros(self.totalDivNo+1)
 
     def setInitCondition(self):
-        """初期条件の設定"""
+        """初期条件の設定."""
         self.x = np.array([self.dx*i for i in range(self.totalGridNo)])
         self.zb = self.Ib*(self.xEnd-self.x)
         self.Q[:] = self.Qb[0]
@@ -68,26 +69,27 @@ class SetData:
 
 
 class FlowParam:
-    """流れの諸量を計算するクラス"""
-    # 流積
+    """流れの諸量を計算するクラス."""
+
     @staticmethod
     def calcA(_h, _B):
-        return(_h*_B)
+        """流積."""
+        return (_h*_B)
 
-    # 潤辺
     @staticmethod
     def calc_s(_h, _B):
-        return(_B+2.*_h)
+        """潤辺."""
+        return (_B+2.*_h)
 
-    # 径深
     @staticmethod
     def calcR(_A, _s):
-        return(_A/_s)
+        """径深."""
+        return (_A/_s)
 
-    # 等流時の流量を求める関数
     @staticmethod
     def calcQ0(_n, _A, _R, _Ib):
-        return(1./_n*_A*_R**(2./3.)*_Ib**.5)
+        """等流時の流量を求める関数."""
+        return (1./_n*_A*_R**(2./3.)*_Ib**.5)
 
     # 等流の関係
     @staticmethod
@@ -95,22 +97,23 @@ class FlowParam:
         __A = FlowParam.calcA(_h, _B)
         __s = FlowParam.calc_s(_h, _B)
         __R = FlowParam.calcR(__A, __s)
-        return(np.abs(-_Ib+_n**2.*(_Q/__A)**2./__R**(4./3.)))
+        return (np.abs(-_Ib+_n**2.*(_Q/__A)**2./__R**(4./3.)))
 
-    # 等流水深を求める関数
     @staticmethod
     def calch0(_n, _B, _Ib, _Q):
+        """等流水深を求める関数."""
         __h0 = scipy.optimize.fmin(FlowParam.__eqUniform,
                                    x0=[(_n*_n*(_Q/_B)**2./_Ib)**(3./10.)],
                                    xtol=EPS_DEPTH,  disp=False,
                                    args=(_n, _B, _Ib, _Q, ))[0]
-        return(__h0)
+        return (__h0)
 
 
 class KinematicWave(SetData):
-    """kinematic wave 法のクラス"""
+    """kinematic wave 法のクラス."""
+
     def __init__(self):
-        # 変数等の設定
+        """変数等の設定."""
         super().__init__()
         super().setInitCondition()
 
@@ -126,7 +129,7 @@ class KinematicWave(SetData):
         __time = decimal.Decimal(_time)/decimal.Decimal(3600.0)
         __name = str(__time)+" hr"
         # ファイルへの出力
-        if(_fileNo == 0):
+        if (_fileNo == 0):
             with pd.ExcelWriter(OUTPUT_FILE_NAME, mode='w') as writer:
                 self.df.to_excel(writer, sheet_name=__name, index=False)
         else:
@@ -136,15 +139,15 @@ class KinematicWave(SetData):
     # 時間の刻み幅dtの計算
     def __calc_dT(self, _outputTime, _lambda):
         __dT = np.min([self.Cr*self.dx/_lambda, self.outputTime-_outputTime])
-        return(__dT)
+        return (__dT)
 
     # lambdaの計算
     def __calcLambda(self, _A, _Q, _R_B):
-        return(np.max((5./3.-4./3.*_R_B)*(_Q/_A)))
+        return (np.max((5./3.-4./3.*_R_B)*(_Q/_A)))
 
     # Aの更新
     def __calcNewA(self, _At, _Qt, _dT):
-        return(_At[1:]-_dT/self.dx*(_Qt[1:]-_Qt[:-1]))
+        return (_At[1:]-_dT/self.dx*(_Qt[1:]-_Qt[:-1]))
 
     # 上流端Qの更新
     def __calcNewBC(self, _time):
@@ -153,7 +156,7 @@ class KinematicWave(SetData):
         __Qb = self.Qb[__i-1]+__dQ_dT*(_time-self.tb[__i-1])
         __hb = FlowParam.calch0(self.n, self.B, self.Ib, __Qb)
         __Ab = FlowParam.calcA(__hb, self.B)
-        return(__Qb, __hb, __Ab)
+        return (__Qb, __hb, __Ab)
 
     # 水深，潤辺，径深，流量の更新
     def __updateValue(self):
@@ -163,14 +166,14 @@ class KinematicWave(SetData):
         self.Q[1:] = FlowParam.calcQ0(self.n, self.A[1:], self.R[1:], self.Ib)
 
     def procKW(self):
-        """計算手順"""
+        """計算手順."""
         __time = 0.0
         __outputTime = 0.0
         __fileNo = 0
         # 初期条件のファイルへの出力
         self.__writeFile(__fileNo, __time)
         # 計算開始
-        while(1):
+        while (1):
             # 時刻tのAとQ
             __At = np.copy(self.A)
             __Qt = np.copy(self.Q)
