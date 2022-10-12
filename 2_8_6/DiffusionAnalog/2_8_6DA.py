@@ -1,4 +1,4 @@
-'''Diffusion analog 法による洪水追跡計算を行うプログラム'''
+"""Diffusion analog 法による洪水追跡計算を行うプログラム."""
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import numpy as np
@@ -16,8 +16,10 @@ decimal.getcontext().prec = 10
 
 
 class SetData:
-    """入力データを読み込むクラス"""
+    """入力データを読み込むクラス."""
+
     def __init__(self):
+        """初期設定."""
         self.data = pd.read_excel(INPUT_FILE_NAME, sheet_name=None)
         # 計算条件の読み込み
         print(self.data[SHEET1_NAME])
@@ -54,7 +56,7 @@ class SetData:
         self.Q = np.zeros(self.totalDivNo+1)
 
     def setInitCondition(self):
-        """初期条件の設定"""
+        """初期条件の設定."""
         self.x = np.array([self.dx*i for i in range(self.totalGridNo)])
         self.zb = self.Ib*(self.xEnd-self.x)
         self.Q[:] = self.Qb[0]
@@ -69,68 +71,69 @@ class SetData:
 
 
 class FlowParam:
-    """流れの諸量を計算するクラス"""
+    """流れの諸量を計算するクラス."""
 
     @staticmethod
     def calcA(_h, _B):
-        """流積"""
-        return(_h*_B)
+        """流積."""
+        return (_h*_B)
 
     @staticmethod
     def calc_s(_h, _B):
-        """潤辺"""
-        return(_B+2.*_h)
+        """潤辺."""
+        return (_B+2.*_h)
 
     @staticmethod
     def calcR(_A, _s):
-        """径深"""
-        return(_A/_s)
+        """径深."""
+        return (_A/_s)
 
     @staticmethod
     def calcQ0(_n, _A, _R, _Ib):
-        """等流時の流量を求める関数"""
-        return(1./_n*_A*_R**(2./3.)*_Ib**.5)
+        """等流時の流量を求める関数."""
+        return (1./_n*_A*_R**(2./3.)*_Ib**.5)
 
     @staticmethod
     def __eqUniform(_h, _n, _B, _Ib, _Q):
-        """等流の関係"""
+        """等流の関係."""
         __A = FlowParam.calcA(_h, _B)
         __s = FlowParam.calc_s(_h, _B)
         __R = FlowParam.calcR(__A, __s)
-        return(np.abs(-_Ib+_n**2.*(_Q/__A)**2./__R**(4./3.)))
+        return (np.abs(-_Ib+_n**2.*(_Q/__A)**2./__R**(4./3.)))
 
     @staticmethod
     def calch0(_n, _B, _Ib, _Q):
-        """等流水深を求める関数 (kinematic wave法)"""
+        """等流水深を求める関数 (kinematic wave法)."""
         __h0 = scipy.optimize.fmin(FlowParam.__eqUniform,
                                    x0=[(_n*_n*(_Q/_B)**2./_Ib)**(3./10.)],
                                    xtol=EPS_DEPTH,  disp=False,
                                    args=(_n, _B, _Ib, _Q, ))[0]
-        return(__h0)
+        return (__h0)
 
     @staticmethod
     def __eqUniformDA(_h, _n, _B, _Ib, _Q, _hP, _dx):
-        """等流の関係(diffusion analog法)"""
+        """等流の関係(diffusion analog法)."""
         __A = FlowParam.calcA(_h, _B)
         __s = FlowParam.calc_s(_h, _B)
         __R = FlowParam.calcR(__A, __s)
         __dh_dx = (_hP-_h)/_dx
-        return(np.abs(-_Ib+__dh_dx+_n**2.*(_Q/__A)**2./__R**(4./3.)))
+        return (np.abs(-_Ib+__dh_dx+_n**2.*(_Q/__A)**2./__R**(4./3.)))
 
     @staticmethod
     def calch0DA(_n, _B, _Ib, _Q, _hP, _dx):
-        """等流水深を求める関数(diffusion analog法)"""
+        """等流水深を求める関数(diffusion analog法)."""
         __h0 = scipy.optimize.fmin(FlowParam.__eqUniformDA,
                                    x0=[(_n*_n*(_Q/_B)**2./_Ib)**(3./10.)],
                                    xtol=EPS_DEPTH, disp=False,
                                    args=(_n, _B, _Ib, _Q, _hP, _dx, ))[0]
-        return(__h0)
+        return (__h0)
 
 
 class DiffusionAnalog(SetData):
-    """Diffusion analog 法のクラス"""
+    """Diffusion analog 法のクラス."""
+
     def __init__(self):
-        # 変数等の設定
+        """変数等の設定."""
         super().__init__()
         super().setInitCondition()
 
@@ -146,7 +149,7 @@ class DiffusionAnalog(SetData):
         __time = decimal.Decimal(_time)/decimal.Decimal(3600.0)
         __name = str(__time)+" hr"
         # ファイルへの出力
-        if(_fileNo == 0):
+        if (_fileNo == 0):
             with pd.ExcelWriter(OUTPUT_FILE_NAME, mode='w') as writer:
                 self.df.to_excel(writer, sheet_name=__name, index=False)
         else:
@@ -156,15 +159,15 @@ class DiffusionAnalog(SetData):
     # 時間の刻み幅dtの計算
     def __calc_dT(self, _outputTime, _lambda):
         __dT = np.min([self.Cr*self.dx/_lambda, self.outputTime-_outputTime])
-        return(__dT)
+        return (__dT)
 
     # lambdaの計算
     def __calcLambda(self, _A, _Q, _R_B):
-        return(np.max((5./3.-4./3.*_R_B)*(_Q/_A)))
+        return (np.max((5./3.-4./3.*_R_B)*(_Q/_A)))
 
     # Aの更新
     def __calcNewA(self, _At, _Qt, _dT):
-        return(_At[1:]-_dT/self.dx*(_Qt[1:]-_Qt[:-1]))
+        return (_At[1:]-_dT/self.dx*(_Qt[1:]-_Qt[:-1]))
 
     # 上流端Qの更新
     def __calcNewBC(self, _time):
@@ -174,7 +177,7 @@ class DiffusionAnalog(SetData):
         __hb = FlowParam.calch0DA(self.n, self.B, self.Ib, __Qb,
                                   self.A[1]/self.B, self.dx)
         __Ab = FlowParam.calcA(__hb, self.B)
-        return(__Qb, __hb, __Ab)
+        return (__Qb, __hb, __Ab)
 
     # 水深，潤辺，径深，流量の更新
     def __updateValue(self):
@@ -187,14 +190,14 @@ class DiffusionAnalog(SetData):
                                       self.Ib-self.dhdx[1:])
 
     def procDA(self):
-        """計算手順"""
+        """計算手順."""
         __time = 0.0
         __outputTime = 0.0
         __fileNo = 0
         # 初期条件のファイルへの出力
         self.__writeFile(__fileNo, __time)
         # 計算開始
-        while(1):
+        while (1):
             # 時刻tのAとQ
             __At = np.copy(self.A)
             __Qt = np.copy(self.Q)
