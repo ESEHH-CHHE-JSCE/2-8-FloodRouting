@@ -1,4 +1,4 @@
-'''特性曲線法により水深の経時変化から流量ハイドログラフを作成するプログラム'''
+"""特性曲線法により水深の経時変化から流量ハイドログラフを作成するプログラム."""
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import numpy as np
@@ -15,8 +15,10 @@ EPS = 1e-15
 
 
 class SetData:
-    """データを読み込むクラス"""
+    """データを読み込むクラス."""
+
     def __init__(self):
+        """初期設定."""
         self.data = pd.read_excel(INPUT_FILE_NAME, sheet_name=None)
         # 計算条件の読み込み
         print(self.data[SHEET1_NAME])
@@ -47,38 +49,39 @@ class SetData:
 
 
 class MethodOfCharacteristics(SetData):
-    """特性曲線法の図解法のクラス"""
+    """特性曲線法の図解法のクラス."""
+
     def __init__(self):
-        # 変数等の設定
+        """変数等の設定."""
         super().__init__()
 
     # 流積A
     def __calcA(self, _h):
-        return(self.B*_h)
+        return (self.B*_h)
 
     # 潤辺
     def __calc_s(self, _h):
-        return(self.B+2.*_h)
+        return (self.B+2.*_h)
 
     # 径深
     def __calcR(self, _A, _s):
-        return(_A/_s)
+        return (_A/_s)
 
     # 等流の流速
     def __calcU0(self, _R):
-        return(1./self.n*_R**(2./3.)*self.Ib**.5)
+        return (1./self.n*_R**(2./3.)*self.Ib**.5)
 
     # 波速
     def __calcC(self, _h):
-        return((GRAVITY_ACCELERATION*_h)**.5)
+        return ((GRAVITY_ACCELERATION*_h)**.5)
 
     # 摩擦勾配
     def __calcIf(self, _U, _R):
-        return(self.n**2.*_U**2./_R**(4./3.))
+        return (self.n**2.*_U**2./_R**(4./3.))
 
     # 波速から水深へ
     def __Ctoh(self, _C):
-        return(_C**2./GRAVITY_ACCELERATION)
+        return (_C**2./GRAVITY_ACCELERATION)
 
     # 波速から水深と径水
     def __CtohR(self, _C):
@@ -86,11 +89,11 @@ class MethodOfCharacteristics(SetData):
         __A = self.__calcA(__h)
         __s = self.__calc_s(__h)
         __R = self.__calcR(__A, __s)
-        return(__h, __R)
+        return (__h, __R)
 
     # K = g(Ib-If)/2
     def __calcK(self, _If):
-        return(GRAVITY_ACCELERATION*(self.Ib-_If)/2.)
+        return (GRAVITY_ACCELERATION*(self.Ib-_If)/2.)
 
     # Uの算定
     def __calcUx(self, _R, _Rd, _C, _Ud, _Cd, _dt):
@@ -100,7 +103,7 @@ class MethodOfCharacteristics(SetData):
                (-1.+np.sqrt(1.+2.*GRAVITY_ACCELERATION*self.n**2./_R**(4./3.) *
                             _dt*(_Ud+2.*(_C-_Cd)+(GRAVITY_ACCELERATION *
                                                   self.Ib/2.+__Kd)*_dt))))
-        return(__U)
+        return (__U)
 
     # t=0 x=200mの結果
     def __setInitRes(self):
@@ -132,7 +135,7 @@ class MethodOfCharacteristics(SetData):
 
     # 線形補間の関数
     def __interpolate(self, _y0, _yP, _t0, _tP, _dt):
-        return(_y0+(_yP-_y0)/(_tP-_t0)*_dt)
+        return (_y0+(_yP-_y0)/(_tP-_t0)*_dt)
 
     # UとCを線形補間で求める関数
     def __setUC(self, _tM, _CM, _UM, _dts, _dt, _i):
@@ -140,7 +143,7 @@ class MethodOfCharacteristics(SetData):
                                  _tM[_i-1], _tM[_i], _dts-_dt)
         _Ud = self.__interpolate(_UM[_i-1], _UM[_i],
                                  _tM[_i-1], _tM[_i], _dts-_dt)
-        return(_Cd, _Ud)
+        return (_Cd, _Ud)
 
     # Uの推定
     def __calcTmpU(self, _dt, _t, _C, _tM, _CM, _UM, _dts):
@@ -149,14 +152,14 @@ class MethodOfCharacteristics(SetData):
         (__Cd, __Ud) = self.__setUC(_tM, _CM, _UM, _dts, _dt, __i)
         (__hd, __Rd) = self.__CtohR(__Cd)
         __U = self.__calcUx(__R, __Rd, _C, __Ud, __Cd, _dt*self.TC_COEFF)
-        return(__U, __Ud, __Cd)
+        return (__U, __Ud, __Cd)
 
     # dxの推定
     def __calc_dtd(self, _dt, _t, _C, _tM, _CM, _UM, _dts):
         (__U, __Ud, __Cd) = self.__calcTmpU(_dt, _t, _C, _tM, _CM, _UM, _dts)
         __dxd1 = np.abs(__Ud-__Cd+__U-_C)*_dt/2.
         __dxd2 = (__Ud+__Cd)*(_dts-_dt)
-        return(np.abs(__dxd1-__dxd2))
+        return (np.abs(__dxd1-__dxd2))
 
     # 境界でのUを推定する関数
     def __procUx0(self, _t, _C, _tM, _CM, _UM, _dts):
@@ -165,7 +168,7 @@ class MethodOfCharacteristics(SetData):
                                    args=(_t, _C, _tM, _CM, _UM, _dts, ))[0]
         # print(_dts-__dT)
         __U = self.__calcTmpU(__dT, _t, _C, _tM, _CM, _UM, _dts)[0]
-        return(__U)
+        return (__U)
 
     # UとCを計算する関数
     def __calc_dxUdCd(self, _t, _C, _tM, _CM, _UM, _xC, _xCM):
@@ -177,7 +180,7 @@ class MethodOfCharacteristics(SetData):
                                  _tM[__i-1], _tM[__i], __dt)
         __C = self.__interpolate(_CM[__i-1], _CM[__i],
                                  _tM[__i-1], _tM[__i], __dt)
-        return(__dx, __U, __C)
+        return (__dx, __U, __C)
 
     # 特性曲線
     def __calc_CUdT(self, _Uu, _Ud, _Cu, _Cd, _dx):
@@ -194,7 +197,7 @@ class MethodOfCharacteristics(SetData):
         (__h, __R) = self.__CtohR(__C)
         __U = self.__calcUx(__R, __Rd, __C, _Ud, _Cd, __dT)
         __dxu = (_Uu+_Cu+__U+__C)*__dT/2.0
-        return(__C, __U, __dT/self.TC_COEFF, __dxu)
+        return (__C, __U, __dT/self.TC_COEFF, __dxu)
 
     # x＝200mの計算結果
     def __getRes(self, _xC, _U, _C, _tC):
@@ -207,7 +210,7 @@ class MethodOfCharacteristics(SetData):
         __restC = self.__interpolate(_tC[__i-1], _tC[__i],
                                      _xC[__i-1], _xC[__i], __dx)
         __resh = self.__Ctoh(__resC)
-        return(__restC, __resU, __resC, __resh)
+        return (__restC, __resU, __resC, __resh)
 
     # t!0の特性速度，x~t, U~t,C~tの関係
     def __setXUC_t(self, i):
@@ -223,7 +226,7 @@ class MethodOfCharacteristics(SetData):
         self.xC[i].append(0.0)
         # x mのUとCの計算
         __tmpT = __t
-        while(1):
+        while (1):
             # dxの計算
             (__dx, __Ud, __Cd) = self.__calc_dxUdCd(__tmpT, __C, __tM,
                                                     __CM, __UM,
@@ -237,10 +240,10 @@ class MethodOfCharacteristics(SetData):
             self.C[i].append(__tmpC)
             self.tC[i].append(self.tC[i][-1]+__dT)
             __tmpT += __dT
-            if(__tmpT > self.t[-1]):
+            if (__tmpT > self.t[-1]):
                 break
         # 結果の保存
-        if(np.max(self.xC[i]) > self.dx):
+        if (np.max(self.xC[i]) > self.dx):
             __res = self.__getRes(np.array(self.xC[i]),
                                   np.array(self.U[i]),
                                   np.array(self.C[i]),
@@ -251,8 +254,8 @@ class MethodOfCharacteristics(SetData):
             self.URes.append(__res[1])
             self.QRes.append(self.__calcA(__res[3])*__res[1])
 
-    # 特性曲線法の計算手順
     def procMC(self):
+        """特性曲線法の計算手順."""
         # 流積
         self.A = self.__calcA(self.h)
         # 潤辺
@@ -273,19 +276,19 @@ class MethodOfCharacteristics(SetData):
         for i in range(1, self.TimeNo-1):
             self.__setXUC_t(i)
 
-    # 図の出力
     def plot(self):
+        """図の作成."""
         cl = 'black'
         cl2 = 'gray'
         cl3 = 'white'
         X_RANGE = [0.0, 4.0*self.dx]
         Y_RANGE = [np.min(self.t), np.max(self.t)]
         __label = '$x$='+str(int(self.dx))+'m'
-        if(self.TC_COEFF == 1.0):
+        if (self.TC_COEFF == 1.0):
             __tlabel = '$t$(s)'
-        elif(self.TC_COEFF == 60.0):
+        elif (self.TC_COEFF == 60.0):
             __tlabel = '$t$(min)'
-        elif(self.TC_COEFF == 3600.0):
+        elif (self.TC_COEFF == 3600.0):
             __tlabel = '$t$(hr)'
         else:
             print("ERROR!")
@@ -354,8 +357,8 @@ class MethodOfCharacteristics(SetData):
         axes[1].grid()
         plt.savefig('Timeh_Q.pdf', transparent=True, bbox_inches='tight')
 
-    # ファイルの出力
     def writeFile(self):
+        """ファイルへの出力."""
         # データフレームの作成
         __df = pd.DataFrame(self.tRes, columns=['t(hr)'])
         __df['h(m)'] = self.hRes
