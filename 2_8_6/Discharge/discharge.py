@@ -1,4 +1,4 @@
-'''上流端の流量ハイドログラフを以下の式から計算し，グラフとデータを作成するプログラム'''
+"""上流端の流量ハイドログラフを以下の式から計算し，グラフとデータを作成するプログラム."""
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import numpy as np
@@ -14,9 +14,10 @@ SHEET1_NAME = "計算条件"
 
 
 class SetUpstreamDischarge:
-    """上流端ハイドログラフを作成するクラス"""
+    """上流端ハイドログラフを作成するクラス."""
+
     def __init__(self):
-        """データの読み込み"""
+        """データの読み込み."""
         self.data = pd.read_excel(INPUT_FILE_NAME, sheet_name=SHEET1_NAME)
         print(self.data)
         self.Qb = self.data[self.data.columns[1]][0]
@@ -40,8 +41,8 @@ class SetUpstreamDischarge:
         # エクセルファイルへの書き出し
         df.to_excel(OUTPUT_FILE_NAME, index=False)
 
-    # グラフ作成
     def graph(self):
+        """グラフ作成."""
         plt.figure(figsize=(5, 2.5))
         plt.plot(self.t, self.Q, color='black')
         plt.xlabel('$t$(hr)')
@@ -52,14 +53,14 @@ class SetUpstreamDischarge:
         plt.savefig(GRAPH_FILE_NAME, transparent=True, bbox_inches='tight')
         plt.show()
 
-    # 流量のデータを作成
     def getHydroData(self):
+        """流量のデータを作成."""
         self.__calcHydro()
         self.__writeFile()
 
 
 if __name__ == "__main__":
-    """main関数"""
+    """main関数."""
     disHydro = SetUpstreamDischarge()  # データの読み込み
     disHydro.getHydroData()  # ハイドログラフの計算とファイルへの出力
     disHydro.graph()  # グラフの作成
