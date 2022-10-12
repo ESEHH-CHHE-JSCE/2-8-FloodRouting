@@ -1,4 +1,4 @@
-'''Muskingum Cunge法により洪水追跡を行うプログラム'''
+"""Muskingum Cunge法により洪水追跡を行うプログラム."""
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import matplotlib.pyplot as plt
@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 # 定数の設定
 INPUT_FILE_NAME = "MCungeInput.xlsx"
+OUTPUT_FILE_NAME = "Muskingum.xlsx"
 SHEET1_NAME = "計算条件"
 SHEET2_NAME = "上流端流量の経時変化"
 FONTSIZE_XYLABEL = 14
@@ -14,8 +15,10 @@ Q_MAX = 2100.
 
 
 class Muskingum:
-    """Muskingum-Cunge法のクラス"""
+    """Muskingum-Cunge法のクラス."""
+
     def __init__(self):
+        """初期設定."""
         self.data = pd.read_excel(INPUT_FILE_NAME, sheet_name=None)
         # 計算条件の読み込み
         print(self.data[SHEET1_NAME])
@@ -43,10 +46,10 @@ class Muskingum:
         _QO = np.copy(_QI)
         for i in range(len(_QO)-1):
             _QO[i+1] = _C1*_QI[i]+_C2*_QI[i+1]+_C3*_QO[i]
-        return(_QO)
+        return (_QO)
 
     def calcProc(self):
-        """計算手順"""
+        """計算手順."""
         __N = int(self.xEnd/self.dx)
         __Q = []
         __x = []
@@ -58,8 +61,8 @@ class Muskingum:
         self.resQ = np.array(__Q)
         self.x = np.array(__x)
 
-    # グラフの出力
     def plot(self, _setDis):
+        """グラフの出力."""
         plt.figure(figsize=(5., 2.5))
         plt.xlim(np.min(self.t), 48)
         plt.grid()
@@ -74,6 +77,16 @@ class Muskingum:
         plt.ylabel("$Q$ (m$^3/s$)", fontsize=FONTSIZE_XYLABEL)
         plt.savefig("muskingum.pdf", transparent=True, bbox_inches='tight')
 
+    def writeFile(self, _setDis):
+        """ファイルへの出力."""
+        __df = pd.DataFrame(self.t, columns=['t(hr)'])
+        for __x in _setDis:
+            __i = np.where(self.x == __x)[0][0]
+            __colName = str(__x)+"(km)"
+            __df[__colName] = self.resQ[__i]
+        # エクセルファイルへの書き出し
+        __df.to_excel(OUTPUT_FILE_NAME, index=False)
+
 
 if __name__ == "__main__":
     """main関数"""
@@ -81,3 +94,4 @@ if __name__ == "__main__":
     muskingum.calcProc()
     __setKP = [0.0, 40., 80.]
     muskingum.plot(__setKP)
+    muskingum.writeFile(__setKP)
