@@ -1,4 +1,4 @@
-'''解析結果からグラフを作成するプログラムです．'''
+"""解析結果からグラフを作成するプログラムです."""
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import matplotlib.pyplot as plt
@@ -25,15 +25,16 @@ Q_MAX = 2100.
 
 
 class DrawGraph:
-    """入力データを読み込むクラス"""
+    """入力データを読み込むクラス."""
+
     def __init__(self):
-        # 解析結果の読み込み
+        """解析結果の読み込み."""
         __input_file = pd.ExcelFile(INPUT_FILE_NAME)
         self.sheetNames = __input_file.sheet_names
         self.data = pd.read_excel(INPUT_FILE_NAME, sheet_name=self.sheetNames)
 
     def drawWLProfile(self):
-        """水面形のグラフを作成"""
+        """水面形のグラフを作成."""
         __fileNo = 0
         for __sheetName in self.sheetNames:
             __colName = self.data[__sheetName].columns
@@ -61,7 +62,7 @@ class DrawGraph:
             __fileNo += 1
 
     def drawHandQProfile(self, _setTime):
-        """hとQの空間分布のグラフを作成"""
+        """hとQの空間分布のグラフを作成."""
         __useDataNo = []
         __t = []
         # シート名の読み込み
@@ -100,7 +101,7 @@ class DrawGraph:
                     transparent=True, bbox_inches='tight')
 
     def getTimeSeries(self, _setDistance):
-        """水深・流量を経時変化で整理"""
+        """水深・流量を経時変化で整理."""
         __useDataNo = []
         __t = []
         __h = []
@@ -138,7 +139,7 @@ class DrawGraph:
         self.Qt = __Q
 
     def drawTimeDisH(self, _setDistance):
-        """流量・水深の経時変化のグラフを作成"""
+        """流量・水深の経時変化のグラフを作成."""
         # グラフの作成
         fig, axes = plt.subplots(2, 1, figsize=(5., 5.), tight_layout=True)
         for __i in range(len(_setDistance)):
@@ -160,7 +161,7 @@ class DrawGraph:
                     bbox_inches='tight')
 
     def drawTimeDis(self, _setDistance):
-        """ 流量ハイドログラフを作成"""
+        """流量ハイドログラフを作成."""
         plt.figure(figsize=(5, 2.5))
         for __i in range(len(_setDistance)):
             plt.plot(self.t, self.Qt[__i],
@@ -175,7 +176,7 @@ class DrawGraph:
                     bbox_inches='tight')
 
     def drawHQ(self, _setDistance):
-        """H~Q曲線の作成"""
+        """H~Q曲線の作成."""
         plt.figure(figsize=(5, 5.))
         plt.grid()
         for __i in range(len(_setDistance)):
