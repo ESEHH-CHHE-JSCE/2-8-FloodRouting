@@ -327,12 +327,12 @@ class MethodOfCharacteristics(SetData):
         axes[2].plot(self.URes[1:], self.tRes[1:], '--o',
                      color=cl, markerfacecolor=cl3)
         # x軸のラベル
-        axes[0].set_xlim(X_RANGE)
+        axes[0].set_xlim(X_RANGE[0], X_RANGE[-1])
         axes[0].set_xlabel('$x$(m)')
         axes[1].set_xlabel('$C$(m/s)')
         axes[2].set_xlabel('$U$(m/s)')
         for i in range(3):
-            axes[i].set_ylim(Y_RANGE)
+            axes[i].set_ylim(Y_RANGE[0], Y_RANGE[-1])
             axes[i].set_ylabel(__tlabel)
             axes[i].grid()
         plt.savefig('MC.pdf', transparent=True, bbox_inches='tight')
